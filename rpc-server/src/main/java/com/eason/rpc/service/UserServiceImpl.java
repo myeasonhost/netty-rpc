@@ -5,7 +5,7 @@ import com.eason.rpc.common.annotation.ServiceExporter;
 import com.eason.rpc.service.demo.UserService;
 
 
-@ServiceExporter(value = "userServiceImpl",targetInterface = UserService.class)
+@ServiceExporter(name = "userServiceImpl")
 public class UserServiceImpl implements UserService {
     @Override
     public String login(String name) {

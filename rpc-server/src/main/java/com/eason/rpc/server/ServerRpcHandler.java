@@ -10,6 +10,7 @@ import net.sf.cglib.reflect.FastMethod;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.Map;
 
 
@@ -24,32 +25,39 @@ public class ServerRpcHandler extends SimpleChannelInboundHandler<RpcRequest> {
     }
 
     @Override
-    protected void channelRead0(ChannelHandlerContext channelHandlerContext, RpcRequest rpcRequest) throws Exception {
+    protected void channelRead0(ChannelHandlerContext channelHandlerContext, RpcRequest rpcRequest){
         RpcResponse response = new RpcResponse();
         response.setTraceId(rpcRequest.getTraceId());
         try {
             logger.info("server handle request:{}",rpcRequest);
             Object result = handle(rpcRequest);
             response.setResult(result);
-        } catch (Throwable t) {
-            logger.error(t.getMessage(),t);
+        } catch (Exception t) {
+//            logger.error(t.getMessage(),t);
+            logger.error(t.getMessage());
             response.setError(t);
         }
         channelHandlerContext.writeAndFlush(response);
     }
 
-    private Object handle(RpcRequest request) throws Throwable {
-        String className = request.getClassName();
-        Object serviceBean = serviceMapping.get(className);
+    private Object handle(RpcRequest request) throws ServerException {
+        try {
+            String className = request.getClassName();
+            Object serviceBean = serviceMapping.get(className);
+            if (serviceBean==null){
+                throw new ServerException(request.getTraceId(),new Exception(className+" className is not exits"));
+            }
+            Class<?> serviceClass = serviceBean.getClass();
+            String methodName = request.getMethodName();
+            Class<?>[] parameterTypes = request.getParameterTypes();
+            Object[] parameters = request.getParameters();
 
-        Class<?> serviceClass = serviceBean.getClass();
-        String methodName = request.getMethodName();
-        Class<?>[] parameterTypes = request.getParameterTypes();
-        Object[] parameters = request.getParameters();
-
-        FastClass serviceFastClass = FastClass.create(serviceClass);
-        FastMethod serviceFastMethod = serviceFastClass.getMethod(methodName, parameterTypes);
-        return serviceFastMethod.invoke(serviceBean, parameters);
+            FastClass serviceFastClass = FastClass.create(serviceClass);
+            FastMethod serviceFastMethod = serviceFastClass.getMethod(methodName, parameterTypes);
+            return serviceFastMethod.invoke(serviceBean, parameters);
+        } catch (Exception e) {
+            throw new ServerException(e.getMessage());
+        }
     }
 
     @Override

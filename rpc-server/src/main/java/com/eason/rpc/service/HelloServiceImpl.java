@@ -5,7 +5,7 @@ import com.eason.rpc.common.annotation.ServiceExporter;
 import com.eason.rpc.service.demo.HelloService;
 
 
-@ServiceExporter(value = "demoSvr",targetInterface = HelloService.class)
+@ServiceExporter(name = "helloServiceImpl")
 public class HelloServiceImpl implements HelloService{
     public String say(String name) {
         return "say:"+name;

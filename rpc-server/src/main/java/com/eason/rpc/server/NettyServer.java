@@ -114,11 +114,17 @@ public class NettyServer implements ApplicationContextAware {
         logger.info("获取到所有的RPC服务:{}", serviceMap);
         if (serviceMap != null && serviceMap.size() > 0) {
             for (Object serviceBean : serviceMap.values()) {
-                String interfaceName = serviceBean.getClass().getAnnotation(ServiceExporter.class)
-                        .targetInterface()
-                        .getName();
-                logger.info("register service mapping:{}",interfaceName);
-                exportServiceMap.put(interfaceName, serviceBean);
+                ServiceExporter serviceExporter=serviceBean.getClass().getAnnotation(ServiceExporter.class);
+                String serviceName=serviceExporter.name();
+                serviceName = serviceName.replace(serviceName.substring(0, 1), serviceName.substring(0, 1).toUpperCase());
+                Class<?>[] interfaces = serviceBean.getClass().getInterfaces();
+                for (Class<?> interfaceClz: interfaces){
+                    String target=interfaceClz.getName()+"Impl";
+                    if (target.contains(serviceName)){
+                        logger.info("注册成功的RPC服务:{}",serviceBean.getClass().getName());
+                        exportServiceMap.put(interfaceClz.getName(), serviceBean);
+                    }
+                }
             }
         }
     }

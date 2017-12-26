@@ -10,6 +10,14 @@ public class ServerException extends RpcException{
         this.traceId = traceId;
     }
 
+    public ServerException(Exception cause) {
+        super(cause);
+    }
+
+    public ServerException(String message) {
+        super(message);
+    }
+
     public String getTraceId() {
         return traceId;
     }
